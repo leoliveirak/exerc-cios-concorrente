@@ -20,7 +20,7 @@
 // - pai deve esperar pelos filhos antes de terminar!
 
 void childProcess() {
-    printf("Processo filho criado %d\n", getpid());
+    printf("Processo filho %d criado\n", getpid());
     exit(0);
 }
 
