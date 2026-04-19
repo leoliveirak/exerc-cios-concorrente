@@ -20,6 +20,26 @@ double* load_vector(const char* filename, int* out_size);
 // que ambos a e b sejam vetores de tamanho size.
 void avaliar(double* a, double* b, int size, double prod_escalar);
 
+typedef struct {
+    double* a;
+    double* b;
+    int index;
+    int n_loops;
+} MultInfo;
+
+void* scalar_mult(void* mult_info) {
+    MultInfo* args = (MultInfo*) mult_info;
+
+    double* sum = malloc(sizeof(double));
+    *sum = 0;
+    for (int i = 0; i < args->n_loops; i++) {
+        *sum += args->a[i + args->index] * args->b[i + args->index]; 
+    }
+
+    free(args);
+    pthread_exit((void*) sum);
+}
+
 int main(int argc, char* argv[]) {
     srand(time(NULL));
 
@@ -60,10 +80,35 @@ int main(int argc, char* argv[]) {
     }
 
     //Calcula produto escalar. Paralelize essa parte
-    double result = 0;
-    for (int i = 0; i < a_size; ++i) 
-        result += a[i] * b[i];
+    /*for (int i = 0; i < a_size; ++i) 
+    result += a[i] * b[i];
+    */
+
+    if (n_threads > a_size) n_threads = a_size; 
+    pthread_t th[n_threads];
+
+    int chunk = a_size/n_threads;
+    for (int i = 0; i < n_threads; i++) {
+        MultInfo* mult_info = malloc(sizeof(MultInfo));
+        *mult_info = (MultInfo) {
+            .a       = a,   
+            .b       = b,   
+            .index   = i * chunk,
+            .n_loops = (i == n_threads - 1) ? (a_size % n_threads + chunk) : chunk
+        };
+        pthread_create(&th[i], NULL, scalar_mult, (void*) mult_info);
+    }
     
+    double result = 0;
+    for (int i = 0; i < n_threads; i++) { 
+        void* thread_return;
+        pthread_join(th[i], &thread_return);
+        result += (double) *((double*)thread_return);
+        free(thread_return);
+    }
+
+
+
     //    +---------------------------------+
     // ** | IMPORTANTE: avalia o resultado! | **
     //    +---------------------------------+

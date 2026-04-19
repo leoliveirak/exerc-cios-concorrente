@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <pthread.h>
 
+
 // Lê o conteúdo do arquivo filename e retorna um vetor E o tamanho dele
 // Se filename for da forma "gen:%d", gera um vetor aleatório com %d elementos
 //
@@ -20,6 +21,24 @@ double* load_vector(const char* filename, int* out_size);
 // tenham tamanho size.
 void avaliar(double* a, double* b, double* c, int size);
 
+typedef struct {    
+    double* a;
+    double* b;
+    double* c;
+    int index;
+    int n_loops;
+} SumInfo;
+
+void* sum(void* sum_info) {
+    SumInfo* args = (SumInfo*) sum_info;
+    
+    for (int i = 0; i < args->n_loops; i++) {
+        args->c[i + args->index] = args->a[i + args->index] + args->b[i + args->index]; 
+    }
+
+    free(args);
+    pthread_exit(NULL);
+}
 
 int main(int argc, char* argv[]) {
     // Gera um resultado diferente a cada execução do programa
@@ -69,8 +88,26 @@ int main(int argc, char* argv[]) {
     // Calcula com uma thread só. Programador original só deixou a leitura 
     // do argumento e fugiu pro caribe. É essa computação que você precisa 
     // paralelizar
-    for (int i = 0; i < a_size; ++i) 
+    /*for (int i = 0; i < a_size; ++i) 
         c[i] = a[i] + b[i];
+    */
+    if (n_threads > a_size) n_threads = a_size;
+    pthread_t th[n_threads];
+
+    int chunk = a_size/n_threads;
+    for (int i = 0; i < n_threads; i++) {
+        SumInfo* sum_info = malloc(sizeof(SumInfo));
+        *sum_info = (SumInfo) {
+            .a       = a,   
+            .b       = b,   
+            .c       = c,
+            .index   = i * chunk,
+            .n_loops = (i == n_threads - 1) ? (a_size % n_threads + chunk) : chunk
+        };
+        pthread_create(&th[i], NULL, sum, (void*) sum_info);
+    }
+
+    for (int i = 0; i < n_threads; i++) { pthread_join(th[i], NULL); }
 
     //    +---------------------------------+
     // ** | IMPORTANTE: avalia o resultado! | **

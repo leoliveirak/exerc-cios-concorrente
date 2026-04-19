@@ -26,6 +26,15 @@
 
 int contador_global = 0;
 
+void* n_loops_function(void* arg) {
+
+    for (int i = 0; i < *((int*) arg); i++) {
+        ++contador_global;
+    }
+
+    pthread_exit(NULL);
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         printf("n_threads é obrigatório!\n");
@@ -35,8 +44,11 @@ int main(int argc, char* argv[]) {
 
     int n_threads = atoi(argv[1]);
     int n_loops = atoi(argv[2]);
-    //...
-    
+
+    pthread_t th[n_threads];
+    for (int i = 0; i < n_threads; i++) { pthread_create(&th[i], NULL, n_loops_function, (void*) &n_loops); }
+    for (int i = 0; i < n_threads; i++) { pthread_join(th[i], NULL); }
+
     printf("Contador: %d\n", contador_global);
     printf("Esperado: %d\n", n_threads*n_loops);
     return 0;
