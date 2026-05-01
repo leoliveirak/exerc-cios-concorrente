@@ -5,6 +5,7 @@
 
 int gValue = 0;
 pthread_mutex_t gMtx;
+pthread_mutexattr_t attr;
 
 // Função imprime resultados na correção do exercício -- definida em helper.c
 void imprimir_resultados(int n, int** results);
@@ -48,7 +49,9 @@ int main(int argc, char** argv) {
     }
 
     //Inicializa o mutex
-    pthread_mutex_init(&gMtx, NULL);
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
+    pthread_mutex_init(&gMtx, &attr);
 
     int args[n_threads];
     int* results[n_threads];
@@ -64,7 +67,7 @@ int main(int argc, char** argv) {
 
     // Não usaremos mais o mutex
     pthread_mutex_destroy(&gMtx);
-
+    pthread_mutexattr_destroy(&attr);
     // Imprime resultados na tela
     // Importante: deve ser chamada para que a correção funcione
     imprimir_resultados(n_threads, results);
