@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
     //Aloca a memória das matrizes e já gera os números aleatórios das
     //matrizes 1 e 2.
     //As matrizes serão colocadas nas globais matriz1 e matriz2
+    pthread_mutex_init(&matrix_mutex, NULL);
     gerar_matrizes();
 
     //Crias as threads
@@ -65,5 +66,8 @@ int main(int argc, char* argv[]) {
 
     //Libera a memória das matrizes
     liberar_matrizes();
+
+    pthread_mutex_destroy(&matrix_mutex);
+
     return 0;
 }

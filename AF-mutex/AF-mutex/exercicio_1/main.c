@@ -25,12 +25,14 @@
 
 
 int contador_global = 0;
-
+pthread_mutex_t mutex;
 
 void *incrementor(void *arg) {
     int n_loops = *(int *)arg;
     for (int i = 0; i < n_loops; i++) {
+        pthread_mutex_lock(&mutex);
         contador_global += 1;
+        pthread_mutex_unlock(&mutex);
     }
     pthread_exit(NULL); // ou return NULL;
 }
@@ -44,6 +46,7 @@ int main(int argc, char* argv[]) {
     int n_threads = atoi(argv[1]);
     int n_loops = atoi(argv[2]);
     pthread_t threads[n_threads];
+    pthread_mutex_init(&mutex, NULL);
 
     for (int i = 0; i < n_threads; i++)
         pthread_create(&threads[i], NULL, incrementor, (void*)&n_loops);
@@ -53,5 +56,7 @@ int main(int argc, char* argv[]) {
 
     printf("Contador: %d\n", contador_global);
     printf("Esperado: %d\n", n_threads * n_loops);
+
+    pthread_mutex_destroy(&mutex);
     return 0;
 }
